@@ -51,7 +51,7 @@ jobs:
             cd django
             django-admin startproject sr
             mv ../simple_research sr
-            cd qs
+            cd sr
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py test
@@ -105,7 +105,7 @@ jobs:
             cd django
             django-admin startproject sr
             mv ../simple_research sr
-            cd qs
+            cd sr
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py test
@@ -159,7 +159,7 @@ jobs:
             cd django
             django-admin startproject sr
             mv ../simple_research sr
-            cd qs
+            cd sr
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py test
@@ -213,7 +213,7 @@ jobs:
             cd django
             django-admin startproject sr
             mv ../simple_research sr
-            cd qs
+            cd sr
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py test
@@ -267,7 +267,7 @@ jobs:
             cd django
             django-admin startproject sr
             mv ../simple_research sr
-            cd qs
+            cd sr
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py test
@@ -321,7 +321,7 @@ jobs:
             cd django
             django-admin startproject sr
             mv ../simple_research sr
-            cd qs
+            cd sr
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py test
