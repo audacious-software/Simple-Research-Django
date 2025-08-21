@@ -1,3 +1,5 @@
+# pylint: disable=line-too-long, no-member
+
 import phonenumbers
 
 from django.conf import settings

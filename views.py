@@ -81,7 +81,7 @@ def dashboard_update_participant(request):
         'message': 'Unable to process request - please try again.'
     }
 
-    if request.method == 'POST':
+    if request.method == 'POST': # pylint: disable=too-many-nested-blocks
         name = request.POST.get('name', None)
 
         if name is not None:
