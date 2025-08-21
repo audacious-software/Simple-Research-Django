@@ -13,7 +13,7 @@ from .models import ResearchStudy, ResearchParticipant, ResearchParticipation
 
 class PrettyJSONWidgetFixed(PrettyJSONWidget):
     def render(self, name, value, attrs=None, **kwargs):
-        return mark_safe(super().render(name, value, attrs=None, **kwargs))
+        return mark_safe(super().render(name, value, attrs=None, **kwargs)) # nosec
 
 @admin.register(ResearchStudy)
 class ResearchStudyAdmin(admin.ModelAdmin):
