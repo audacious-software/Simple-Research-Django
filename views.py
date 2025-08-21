@@ -152,7 +152,7 @@ def dashboard_studies(request):
     if (query in (None, '')) is False:
         search_query = Q(name__icontains=query) | Q(description__icontains=query) # pylint: disable=unsupported-binary-operation
         search_query = search_query | Q(contact_information__icontains=query) | Q(principle_investigators__icontains=query) # pylint: disable=unsupported-binary-operation
-        search_query = search_query | Q(metadata__icontains=query)
+        search_query = search_query | Q(metadata__icontains=query) # pylint: disable=unsupported-binary-operation
 
         study_objects = ResearchStudy.objects.filter(search_query)
 
