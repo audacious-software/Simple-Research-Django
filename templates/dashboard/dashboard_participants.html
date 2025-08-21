@@ -1,0 +1,233 @@
+{% extends 'simple_dashboard_base.html' %}
+{% load static %}
+{% load simple_dashboard %}
+{% block 'page_title' %}Research Participants | {% simple_dashboard_site_name %}{% endblock %}
+{% block 'navigation_title' %}Research Participants{% endblock %}
+{% block 'main_content' %}
+	<div class="mdc-layout-grid" style="padding: 16px;">
+		<div class="mdc-layout-grid__inner">
+			<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+				<div class="mdc-data-table mdc-card" id="participants_table" style="width: 100%; margin-bottom: 80px;">
+					<div class="mdc-data-table__table-container">
+						<table class="mdc-data-table__table" aria-label="Research Participants" style="width: 100%;">
+							<thead>
+								<tr class="mdc-data-table__header-row">
+									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">Name</th>
+									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">Phone Number</th>
+									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">E-Mail</th>
+									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">Studies</th>
+									<th class="mdc-data-table__header-cell" role="columnheader" scope="col" style="text-align: center;">Actions</th>
+								</tr>
+							</thead>
+                            <tbody class="mdc-data-table__content">
+								{% for participant in participants %}
+									<tr class="mdc-data-table__row">
+										<td class="mdc-data-table__cell" scope="row">{{ participant.name }}</a></td>
+										<td class="mdc-data-table__cell" scope="row">{{ participant.phone_number }}</a></td>
+										<td class="mdc-data-table__cell" scope="row">{{ participant.email }}</a></td>
+										<td class="mdc-data-table__cell" scope="row">{{ participant.study_names|join:", " }}</a></td>
+										<td class="mdc-data-table__cell" style="text-align: center; text-overflow: unset;">
+											{% for action in participant.dashboard_actions %}
+	                                            <button class="mdc-icon-button mdc-icon-button--touch material-icons participant_url_button" data-url="{{ action.url }}">
+                                                	<div class="mdc-icon-button__ripple"></div>
+													{{ action.icon }}
+												</button>
+											{% endfor %}
+
+                                            <button class="mdc-icon-button mdc-icon-button--touch material-icons participant_update_button" data-edit-id="{{ participant.pk }}" data-edit-name="{{ participant.name }}" data-edit-phone="{{ participant.phone_number }}" data-edit-email="{{ participant.email }}" data-edit-studies="{{ participant.study_pks|join:',' }}">
+                                                <div class="mdc-icon-button__ripple"></div>
+                                                edit
+                                            </button>
+                                            <button class="mdc-icon-button mdc-icon-button--touch material-icons participant_delete_button" data-delete-id="{{ participant.pk }}" data-delete-name="{{ participant.name }}">
+                                                <div class="mdc-icon-button__ripple"></div>
+                                                delete
+                                            </button>
+										</td>
+									</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+
+					<div class="mdc-data-table__pagination">
+						<div class="mdc-data-table__pagination-trailing">
+							<div class="mdc-data-table__pagination-rows-per-page">
+								<div class="mdc-data-table__pagination-rows-per-page-label">
+									Participants per page
+								</div>
+
+								<div class="mdc-select mdc-select--outlined mdc-select--no-label mdc-data-table__pagination-rows-per-page-select">
+									<div class="mdc-select__anchor" role="button" aria-haspopup="listbox" aria-labelledby="demo-pagination-select" tabindex="0">
+										<span class="mdc-select__selected-text-container">
+											<span id="demo-pagination-select" class="mdc-select__selected-text">10</span>
+										</span>
+										<span class="mdc-select__dropdown-icon">
+											<svg class="mdc-select__dropdown-icon-graphic" viewBox="7 10 10 5">
+												<polygon class="mdc-select__dropdown-icon-inactive" stroke="none" fill-rule="evenodd" points="7 10 12 15 17 10"></polygon>
+												<polygon class="mdc-select__dropdown-icon-active" stroke="none" fill-rule="evenodd" points="7 15 12 10 17 15"></polygon>
+											</svg>
+										</span>
+										<span class="mdc-notched-outline mdc-notched-outline--notched">
+											<span class="mdc-notched-outline__leading"></span>
+											<span class="mdc-notched-outline__trailing"></span>
+										</span>
+									</div>
+
+									<div class="mdc-select__menu mdc-menu mdc-menu-surface mdc-menu-surface--fullwidth" role="listbox">
+										<ul class="mdc-list">
+											<li class="mdc-list-item mdc-list-item--selected" aria-selected="true" role="option" data-value="10">
+												<span class="mdc-list-item__text">10</span>
+											</li>
+											<li class="mdc-list-item" role="option" data-value="25">
+												<span class="mdc-list-item__text">25</span>
+											</li>
+											<li class="mdc-list-item" role="option" data-value="100">
+												<span class="mdc-list-item__text">100</span>
+											</li>
+										</ul>
+									</div>
+								</div>
+							</div>
+
+							<div class="mdc-data-table__pagination-navigation">
+								<div class="mdc-data-table__pagination-total">
+									{{ start }} to {{ end }} of {{ total }}
+								</div>
+								<button class="mdc-icon-button material-icons mdc-data-table__pagination-button" data-first-page="true" data-url="{{ first }}">
+									<div class="mdc-button__icon">first_page</div>
+								</button>
+								<button class="mdc-icon-button material-icons mdc-data-table__pagination-button" data-prev-page="true"  data-url="{{ previous }}" {% if previous %}{% else %}disabled{% endif %}>
+									<div class="mdc-button__icon">chevron_left</div>
+								</button>
+								<button class="mdc-icon-button material-icons mdc-data-table__pagination-button" data-next-page="true" data-url="{{ next }}" {% if next %}{% else %}disabled{% endif %}>
+									<div class="mdc-button__icon">chevron_right</div>
+								</button>
+								<button class="mdc-icon-button material-icons mdc-data-table__pagination-button" data-last-page="true"  data-url="{{ last }}">
+									<div class="mdc-button__icon">last_page</div>
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<button class="mdc-fab mdc-fab--extended" id="fab_add_participant" style="position: absolute; right: 1em; bottom: 1em; z-index: 200;">
+		<div class="mdc-fab__ripple"></div>
+		<span class="material-icons mdc-fab__icon">person_add</span>
+		<span class="mdc-fab__label">Add participant</span>
+	</button>
+
+	<div class="mdc-dialog" id="add_participant_dialog">
+		<div class="mdc-dialog__container">
+			<div class="mdc-dialog__surface" role="dialog" aria-modal="true" aria-labelledby="add-dialog-title" aria-describedby="add-dialog-content" style="min-width: 480px; max-width: 720px;">
+				<div class="mdc-dialog__header">
+					<h2 class="mdc-dialog__title" id="add-dialog-title">
+						Add new participant
+					</h2>
+				</div>
+				<div class="mdc-dialog__content" id="add-dialog-content" style="padding-top: 20px;">
+					<label class="mdc-text-field mdc-text-field--outlined" id="new_participant_name" style="width: 100%;">
+						<span class="mdc-notched-outline">
+							<span class="mdc-notched-outline__leading"></span>
+							<span class="mdc-notched-outline__notch">
+								<span class="mdc-floating-label" id="new-participant-name">Participant Name</span>
+							</span>
+							<span class="mdc-notched-outline__trailing"></span>
+						</span>
+						<input type="text" class="mdc-text-field__input" aria-labelledby="new-participant-name">
+					</label>
+					<label class="mdc-text-field mdc-text-field--outlined" id="new_participant_phone" style="width: 100%; margin-top: 16px;">
+						<span class="mdc-notched-outline">
+							<span class="mdc-notched-outline__leading"></span>
+							<span class="mdc-notched-outline__notch">
+								<span class="mdc-floating-label" id="new-participant-phone">Phone Number</span>
+							</span>
+							<span class="mdc-notched-outline__trailing"></span>
+						</span>
+						<input type="text" class="mdc-text-field__input" aria-labelledby="new-participant-phone">
+					</label>
+					<label class="mdc-text-field mdc-text-field--outlined" id="new_participant_email" style="width: 100%; margin-top: 16px;">
+						<span class="mdc-notched-outline">
+							<span class="mdc-notched-outline__leading"></span>
+							<span class="mdc-notched-outline__notch">
+								<span class="mdc-floating-label" id="new-participant-email">E-Mail <Address></Address></span>
+							</span>
+							<span class="mdc-notched-outline__trailing"></span>
+						</span>
+						<input type="text" class="mdc-text-field__input" aria-labelledby="new-participant-email">
+					</label>
+					<div class="mdc-layout-grid" style="padding: 0px; margin-top: 16px;">
+						<div class="mdc-layout-grid__inner" style="grid-gap: 0px !important;">
+							<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12 mdc-typography">
+								Studies
+							</div>
+							{% for study in studies %}
+								<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6">
+									<div class="mdc-form-field">
+										<div class="mdc-checkbox">
+											<input type="checkbox" class="mdc-checkbox__native-control checkbox-study" id="checkbox-study-{{ study.pk }}"/>
+											<div class="mdc-checkbox__background">
+												<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+													<path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59"/>
+												</svg>
+												<div class="mdc-checkbox__mixedmark"></div>
+											</div>
+											<div class="mdc-checkbox__ripple"></div>
+											<div class="mdc-checkbox__focus-ring"></div>
+										</div>
+										<label for="checkbox-study-{{ study.pk }}">{{ study.name }}</label>
+									</div>
+								</div>
+							{% endfor %}
+							<input type="hidden" id="update_participant_id">
+						</div>
+					</div>
+				</div>
+				<div class="mdc-dialog__actions">
+					<button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close">
+						<div class="mdc-button__ripple"></div>
+						<span class="mdc-button__label">Cancel</span>
+					</button>
+					<button type="button" class="mdc-button mdc-dialog__button" id="dialog_update_participant_button" data-mdc-dialog-action="create" data-mdc-dialog-button-default>
+						<div class="mdc-button__ripple"></div>
+						<span class="mdc-button__label">Add</span>
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="mdc-dialog__scrim"></div>
+	</div>
+
+	<div class="mdc-dialog" id="confirm_delete_participant">
+		<div class="mdc-dialog__container">
+			<div class="mdc-dialog__surface" role="dialog" aria-modal="true" aria-labelledby="delete-participant-title" aria-describedby="delete-participant-content">
+				<div class="mdc-dialog__header">
+					<h2 class="mdc-dialog__title" id="delete-participant-title">
+						Delete participant?
+					</h2>
+				</div>
+				<div class="mdc-dialog__content" id="delete-participant-content" style="padding-top: 20px;">
+					<span class="mdc-typography mdc-typography--body1">Are you sure you want to delete <strong id="delete_participant_name">XXX</strong>?
+					<input type="hidden" id="delete_participant_id">
+				</div>
+				<div class="mdc-dialog__actions">
+					<button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="close" data-mdc-dialog-button-default>
+						<div class="mdc-button__ripple"></div>
+						<span class="mdc-button__label">Cancel</span>
+					</button>
+					<button type="button" class="mdc-button mdc-dialog__button" data-mdc-dialog-action="delete">
+						<div class="mdc-button__ripple"></div>
+						<span class="mdc-button__label">Delete</span>
+					</button>
+				</div>
+			</div>
+		</div>
+		<div class="mdc-dialog__scrim"></div>
+	</div>
+
+{% endblock %}
+{% block 'js_init' %}
+	<script data-main="{% static 'simple_research/js/app/participants.js' %}" src="{% static 'simple_dashboard/js/vendor/require.js' %}"></script>
+{% endblock %}
