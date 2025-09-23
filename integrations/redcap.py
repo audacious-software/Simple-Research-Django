@@ -1,3 +1,5 @@
+# pylint: disable=line-too-long,no-member
+
 import phonenumbers
 import requests
 
@@ -5,10 +7,10 @@ from django.conf import settings
 
 from ..models import ResearchParticipant
 
-def pull_participants(study):
+def pull_participants(study): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     projects = study.metadata.get('redcap_projects', [])
 
-    for project in projects:
+    for project in projects: # pylint: disable=too-many-nested-blocks
         api_token = project.get('api_token', None)
         api_url =  project.get('api_url', None)
 
@@ -119,4 +121,3 @@ def pull_participants(study):
 
             except requests.exceptions.ReadTimeout:
                 pass
-
