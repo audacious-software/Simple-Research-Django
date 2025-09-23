@@ -1,7 +1,6 @@
 # pylint: disable=no-member,line-too-long,ungrouped-imports
 # -*- coding: utf-8 -*-
 
-from __future__ import unicode_literals
 
 from prettyjson import PrettyJSONWidget
 

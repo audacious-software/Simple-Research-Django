@@ -36,13 +36,13 @@ class ResearchStudy(models.Model):
 
 class ResearchParticipant(models.Model):
     name = models.CharField(max_length=4096)
-    sort_name = models.CharField(max_length=4096)
+    sort_name = models.CharField(max_length=4096, null=True, blank=True)
 
     date_of_birth = models.DateField(null=True, blank=True)
 
     address = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
-    phone_number = models.CharField(max_length=4096)
-    email = models.CharField(max_length=4096)
+    phone_number = models.CharField(max_length=4096, null=True, blank=True)
+    email = models.CharField(max_length=4096, null=True, blank=True)
 
     metadata = models.JSONField(default=dict, blank=True)
 

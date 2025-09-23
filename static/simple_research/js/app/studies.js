@@ -10,12 +10,12 @@ requirejs.config({
             deps: ["jquery"]
         },
     },
-    baseUrl: "/static/dashboard/js/app",
+    baseUrl: "/static/simple_dashboard/js/app",
     paths: {
-        app: '/static/dashboard/js/app',
-        material: "/static/dashboard/js/vendor/material-components-web-11.0.0",
-        jquery: "/static/dashboard/js/vendor/jquery-3.4.0.min",
-        cookie: "/static/dashboard/js/vendor/js.cookie"
+        app: '/static/simple_dashboard/js/app',
+        material: "/static/simple_dashboard/js/vendor/material-components-web-11.0.0",
+        jquery: "/static/simple_dashboard/js/vendor/jquery-3.4.0.min",
+        cookie: "/static/simple_dashboard/js/vendor/js.cookie"
     }
 });
 
