@@ -1,12 +1,16 @@
 # pylint: disable=line-too-long, no-member
 
 import json
+import time
 
+import phonenumbers
+
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from django.http import HttpResponse
-from django.shortcuts import render
+from django.http import HttpResponse, Http404
+from django.shortcuts import render, redirect
 from django.urls import reverse
 
 from .models import ResearchStudy, ResearchParticipant
@@ -252,3 +256,75 @@ def dashboard_update_study(request):
                 }
 
     return HttpResponse(json.dumps(payload, indent=2), content_type='application/json', status=200)
+
+def simple_research_profile(request, token): # pylint: disable=too-many-branches
+    if token.endswith('.'):
+        return redirect('simple_research_participant_preferences', token=token[:-1])
+
+    context = {
+        'token': token,
+    }
+
+    token_user = ResearchParticipant.objects.participant_with_token(token)
+
+    if token_user is None:
+        raise Http404
+
+    now_timestamp = int(time.time())
+
+    last_access = request.session.get('simple_research_last_profile_access', 0)
+
+    if request.GET.get('expire', 'false') == 'true':
+        last_access = 0
+
+    needs_login = False
+
+    if now_timestamp - last_access > settings.SIMPLE_RESEARCH_LOGIN_EXPIRE_SECONDS:
+        needs_login = True
+
+    if request.method == 'POST' and request.POST.get('auth_identifier', None) is not None:
+        identifier = request.POST.get('auth_identifier', None)
+
+        if '@' in identifier and (token_user.email in (None, '')) is False:
+            if identifier.lower() != token_user.email.lower():
+                needs_login = True
+            else:
+                needs_login = False
+
+                context['participant'] = token_user
+        elif (token_user.phone_number in (None, '')) is False:
+            country_code = token_user.metadata.get('country_code', settings.SIMPLE_RESEARCH_DEFAULT_COUNTRY_CODE)
+
+            try:
+                parsed_number = phonenumbers.parse(identifier, country_code)
+                formatted_number = phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.E164)
+
+                token_parsed = phonenumbers.parse(token_user.phone_number, country_code)
+                token_formatted = phonenumbers.format_number(token_parsed, phonenumbers.PhoneNumberFormat.E164)
+
+                if token_formatted != formatted_number:
+                    needs_login = True
+                else:
+                    needs_login = False
+
+                    context['participant'] = token_user
+            except phonenumbers.phonenumberutil.NumberParseException:
+                needs_login = True
+
+    if needs_login:
+        return render(request, 'simple_research_profile_auth.html', context=context)
+
+    context['participant'] = token_user
+
+    request.session['simple_research_last_profile_access'] = now_timestamp
+
+    if request.method == 'POST' and request.POST.get('auth_identifier', None) is None:
+        # TO IMPLEMENT - Update record, take action, etc.
+
+        response_json = {
+            'error': 'Invalid request: %s' % request.POST
+        }
+
+        return HttpResponse(json.dumps(response_json, indent=2), content_type='application/json', status=500)
+
+    return render(request, 'simple_research_profile.html', context=context)

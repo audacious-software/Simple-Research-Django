@@ -19,7 +19,15 @@ requirejs.config({
     }
 });
 
-requirejs(["material", "cookie", "jquery", "base"], function(mdc, Cookies) {
+const toLoad = ["material", "cookie", "jquery", "base"]
+
+if (window.dashboadAdditionalModules) {
+	toLoad.push(...window.dashboadAdditionalModules)
+}
+
+requirejs(toLoad, function(mdc, Cookies) {
+	window.materialDesignComponents = mdc
+
 	const doSearch = function(query) {
 		const url = URL.parse(window.location.href)
 		url.searchParams.set('limit', select.value)
@@ -42,8 +50,6 @@ requirejs(["material", "cookie", "jquery", "base"], function(mdc, Cookies) {
 	$('#topbar_search_icon').on('click', function(eventObj) {
 		doSearch(searchField.value)
 	})
-
-	mdc.dataTable.MDCDataTable.attachTo(document.getElementById('participants_table'));
 
 	const select = mdc.select.MDCSelect.attachTo(document.querySelector('.mdc-select'));
 
@@ -147,6 +153,8 @@ requirejs(["material", "cookie", "jquery", "base"], function(mdc, Cookies) {
 	});
 
 	$(".participant_delete_button").click(function(eventObj) {
+		eventObj.preventDefault()
+
 		$("#delete_participant_name").text($(eventObj.target).data()["deleteName"]);
 		$("#delete_participant_id").val($(eventObj.target).data()["deleteId"]);
 
@@ -173,12 +181,50 @@ requirejs(["material", "cookie", "jquery", "base"], function(mdc, Cookies) {
 		}
 	});
 
-
 	$('.mdc-data-table__pagination-button').click(function(eventObj) {
 		eventObj.preventDefault()
 
 		const url = $(this).attr('data-url')
 
 		window.location.href = url
+	})
+
+	$('.participant_menu_open').each(function(index, button) {
+		$(button).parent().find('.mdc-menu').each(function(inelementIndex, element) {
+			const menu = mdc.menu.MDCMenu.attachTo(element)
+
+			menu.setFixedPosition(true)
+
+			$(button).click(function (eventObj) {
+				eventObj.preventDefault()
+
+				menu.open = (menu.open === false)
+			})
+		})
+    })
+
+	mdc.dataTable.MDCDataTable.attachTo(document.getElementById('participants_table'));
+
+	$('input[type="checkbox"]').off('change')
+
+	$('input[type="checkbox"]').on('change', function(eventObj) {
+		console.log('checkbox changed')
+		console.log(eventObj)
+
+		window.setTimeout(function() {
+			const selectedPhones = []
+
+			$('input:checked').each(function(index, checkbox) {
+				$(checkbox).closest('.mdc-data-table__row').each(function(ansIndex, row) {
+					const phone = $(row).attr('data-row-phone')
+
+					if (phone !== undefined && phone !== '') {
+						selectedPhones.push(phone)
+					}
+				})
+			})
+
+			window.updateSimpleMessagingBroadcastDestinations(selectedPhones)
+		}, 250)
 	})
 });

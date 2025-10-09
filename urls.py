@@ -8,7 +8,8 @@ else:
     from django.conf.urls import url
 
 from .views import dashboard_studies, dashboard_delete_study, dashboard_update_study, \
-                   dashboard_participants, dashboard_delete_participant, dashboard_update_participant
+                   dashboard_participants, dashboard_delete_participant, dashboard_update_participant, \
+                   simple_research_profile
 
 urlpatterns = [
     url(r'^participants$', dashboard_participants, name='dashboard_participants'),
@@ -17,4 +18,5 @@ urlpatterns = [
     url(r'^studies$', dashboard_studies, name='dashboard_studies'),
     url(r'^dashboard/study/delete.json$', dashboard_delete_study, name='dashboard_delete_study'),
     url(r'^dashboard/study/update.json$', dashboard_update_study, name='dashboard_update_study'),
+    url(r'^profile/(?P<token>.+)$', simple_research_profile, name='simple_research_profile'),
 ]

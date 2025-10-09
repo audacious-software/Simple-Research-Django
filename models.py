@@ -5,7 +5,9 @@ import importlib
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 
 class ResearchStudy(models.Model):
     name = models.CharField(max_length=4096)
@@ -34,7 +36,15 @@ class ResearchStudy(models.Model):
     def staff_pks(self):
         return list(self.staff_members.all().values_list('pk', flat=True))
 
+class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-public-methods
+    def participant_with_token(self, token):
+        participants = ResearchParticipant.objects.filter(metadata__login_token=token)
+
+        return participants.first()
+
 class ResearchParticipant(models.Model):
+    objects = ResearchParticipantManager()
+
     name = models.CharField(max_length=4096)
     sort_name = models.CharField(max_length=4096, null=True, blank=True)
 
@@ -54,6 +64,9 @@ class ResearchParticipant(models.Model):
 
     def study_names(self):
         return list(self.participations.all().order_by('study__name').values_list('study__name', flat=True))
+
+    def study_participations(self):
+        return self.participations.all().order_by('-enrolled')
 
     def update_enrollments(self, studies):
         current = []
@@ -116,6 +129,19 @@ class ResearchParticipant(models.Model):
                 pass
 
         return actions
+
+    def get_absolute_url(self):
+        if self.metadata.get('login_token', None) is None:
+            token = get_random_string(length=32)
+
+            while ResearchParticipant.objects.participant_with_token(token) is not None:
+                token = get_random_string(length=32)
+
+            self.metadata['login_token'] = token # pylint: disable=unsupported-assignment-operation
+
+            self.save()
+
+        return '%s%s' % (settings.SITE_URL, reverse('simple_research_participant_preferences', args=[self.metadata.get('login_token', None)]))
 
 class ResearchParticipation(models.Model):
     study = models.ForeignKey(ResearchStudy, related_name='participations', on_delete=models.CASCADE)

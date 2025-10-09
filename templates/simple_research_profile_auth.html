@@ -1,0 +1,85 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{% static 'simple_dashboard/js/vendor/material-components-web-11.0.0.css' %}" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+        <title>Verify Your Identity</title>
+
+        <style>
+            body {
+                display: flex;
+                height: 100vh;
+                margin: 0px;
+            }
+
+            .main-content {
+                overflow: auto;
+                height: 100%;
+            }
+
+            .app-bar {
+                position: absolute;
+                z-index: 10;
+            }
+
+            .mdc-top-app-bar {
+                z-index: 7;
+            }
+
+            a {
+            	text-decoration: none;
+            }
+
+            .floating-action-button {
+            	position: absolute;
+            	bottom: 16px;
+            	right: 16px;
+            }
+        </style>
+    </head>
+    <body class="mdc-typography" style="background-color: #BDBDBD;">
+		<div class="mdc-layout-grid" style="width: 100%;">
+			<div class="mdc-layout-grid__inner">
+				<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3 mdc-layout-grid__cell--span-2-tablet mdc-layout-grid__cell--span-1-phone"></div>
+				<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-6 mdc-layout-grid__cell--span-4-tablet mdc-layout-grid__cell--span-2-phone">
+					<div class="mdc-card">
+						<form method="post" action="{% url 'simple_research_profile' token %}">
+							{% csrf_token %}
+							<div class="mdc-layout-grid">
+								<div class="mdc-layout-grid__inner">
+									<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+										<h1 style="margin-top: 0px;" class="mdc-typography--headline5">Verify Your Identity </h1>
+										<label class="mdc-text-field mdc-text-field--outlined" id="auth_identifier" style="width: 100%; margin-bottom: 16px; margin-top: 16px;">
+											<span class="mdc-notched-outline">
+												<span class="mdc-notched-outline__leading"></span>
+												<span class="mdc-notched-outline__notch">
+													<span class="mdc-floating-label" id="auth_identifier_label">E-Mail or Mobile Phone Number</span>
+												</span>
+												<span class="mdc-notched-outline__trailing"></span>
+											</span>
+											<input type="text" name="auth_identifier" class="mdc-text-field__input" aria-labelledby="auth_identifier_label">
+										</label>
+									</div>
+								</div>
+								<div class="mdc-layout-grid__inner">
+									<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+										<button class="mdc-button mdc-card__action mdc-card__action--button" type="submit">
+											<div class="mdc-button__ripple"></div>
+											<span class="mdc-button__label">Continue</span>
+										</button>
+									</div>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+				<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-3 mdc-layout-grid__cell--span-2-tablet mdc-layout-grid__cell--span-1-phone"></div>
+			</div>
+		</div>
+    </body>
+	<script data-main="{% static 'simple_research/js/app/profile_auth.js' %}" src="{% static 'simple_dashboard/js/vendor/require.js' %}"></script>
+</html>

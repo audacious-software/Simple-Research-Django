@@ -9,6 +9,7 @@ def dashboard_actions(metadata):
 
     if email is not None:
         actions.append({
+            'name': 'Send E-Mail',
             'url': 'mailto:%s' % email,
             'icon': 'mail'
         })
@@ -21,6 +22,7 @@ def dashboard_actions(metadata):
         formatted = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
 
         actions.append({
+            'name': 'Phone Call',
             'url': 'tel:%s' % formatted,
             'icon': 'phone_enabled',
         })

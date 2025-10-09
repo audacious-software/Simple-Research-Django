@@ -7,41 +7,102 @@
 	<div class="mdc-layout-grid" style="padding: 16px;">
 		<div class="mdc-layout-grid__inner">
 			<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
-				<div class="mdc-data-table mdc-card" id="participants_table" style="width: 100%; margin-bottom: 80px;">
+				<div class="mdc-data-table mdc-card" id="participants_table" style="width: 100%;">
 					<div class="mdc-data-table__table-container">
-						<table class="mdc-data-table__table" aria-label="Research Participants" style="width: 100%;">
+						<table class="mdc-data-table__table" aria-label="Research Participants">
 							<thead>
 								<tr class="mdc-data-table__header-row">
+          							<th class="mdc-data-table__header-cell mdc-data-table__header-cell--checkbox" role="columnheader" scope="col">
+            							<div class="mdc-checkbox mdc-data-table__header-row-checkbox mdc-checkbox--selected">
+              								<input type="checkbox" class="mdc-checkbox__native-control" aria-label="Toggle all rows"/>
+              								<div class="mdc-checkbox__background">
+                								<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                  									<path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59" />
+                								</svg>
+                								<div class="mdc-checkbox__mixedmark"></div>
+              								</div>
+              								<div class="mdc-checkbox__ripple"></div>
+            							</div>
+          							</th>
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">Name</th>
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">Phone Number</th>
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">E-Mail</th>
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">Studies</th>
-									<th class="mdc-data-table__header-cell" role="columnheader" scope="col" style="text-align: center;">Actions</th>
+									<th class="mdc-data-table__header-cell" role="columnheader" scope="col" style="text-align: center; width: 192px;">Actions</th>
 								</tr>
 							</thead>
                             <tbody class="mdc-data-table__content">
 								{% for participant in participants %}
-									<tr class="mdc-data-table__row">
-										<td class="mdc-data-table__cell" scope="row">{{ participant.name }}</a></td>
+									<tr class="mdc-data-table__row" data-row-id="participant_{{ participant.pk }}" data-row-phone="{{ participant.phone_number }}">
+          								<td class="mdc-data-table__cell mdc-data-table__cell--checkbox">
+            								<div class="mdc-checkbox mdc-data-table__row-checkbox">
+              									<input type="checkbox" class="mdc-checkbox__native-control" aria-labelledby="row_{{ participant.pk }}"/>
+              									<div class="mdc-checkbox__background">
+                									<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24">
+                  										<path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59" />
+                									</svg>
+                									<div class="mdc-checkbox__mixedmark"></div>
+              									</div>
+              									<div class="mdc-checkbox__ripple"></div>
+            								</div>
+          								</td>
+										<td class="mdc-data-table__cell" scope="row" id="row_{{ participant.pk }}">{{ participant.name }}</a></td>
 										<td class="mdc-data-table__cell" scope="row">{{ participant.phone_number }}</a></td>
 										<td class="mdc-data-table__cell" scope="row">{{ participant.email }}</a></td>
 										<td class="mdc-data-table__cell" scope="row">{{ participant.study_names|join:", " }}</a></td>
-										<td class="mdc-data-table__cell" style="text-align: center; text-overflow: unset;">
-											{% for action in participant.dashboard_actions %}
-	                                            <button class="mdc-icon-button mdc-icon-button--touch material-icons participant_url_button" data-url="{{ action.url }}">
-                                                	<div class="mdc-icon-button__ripple"></div>
-													{{ action.icon }}
-												</button>
-											{% endfor %}
-
-                                            <button class="mdc-icon-button mdc-icon-button--touch material-icons participant_update_button" data-edit-id="{{ participant.pk }}" data-edit-name="{{ participant.name }}" data-edit-phone="{{ participant.phone_number }}" data-edit-email="{{ participant.email }}" data-edit-studies="{{ participant.study_pks|join:',' }}">
-                                                <div class="mdc-icon-button__ripple"></div>
-                                                edit
-                                            </button>
-                                            <button class="mdc-icon-button mdc-icon-button--touch material-icons participant_delete_button" data-delete-id="{{ participant.pk }}" data-delete-name="{{ participant.name }}">
-                                                <div class="mdc-icon-button__ripple"></div>
-                                                delete
-                                            </button>
+										<td class="mdc-data-table__cell" style="text-align: center; width: 192px;">
+											<button class="mdc-icon-button mdc-icon-button--touch material-icons participant_update_button" data-edit-id="{{ participant.pk }}" data-edit-name="{{ participant.name }}" data-edit-phone="{{ participant.phone_number }}" data-edit-email="{{ participant.email }}" data-edit-studies="{{ participant.study_pks|join:',' }}">
+												<div class="mdc-icon-button__ripple"></div>
+												edit
+											</button>
+											{% with participant.dashboard_actions as actions %}
+												{% with actions|length as menu_length %}
+													{% if menu_length == 0 %}
+														<div class="mdc-menu-surface--anchor">
+															<button class="mdc-icon-button mdc-icon-button--touch material-icons participant_menu_open" aria-hidden="true" id="participant_{{ participant.pk }}_menu_open">more_vert</button>
+															<div class="mdc-menu mdc-menu-surface" id="participant_{{ participant.pk }}_menu">
+																<ul class="mdc-deprecated-list" role="menu" aria-hidden="true" aria-orientation="vertical" tabindex="-1">
+  																	<li class="mdc-deprecated-list-item">
+																		<span class="mdc-deprecated-list-item__ripple"></span>
+																		<span class="mdc-deprecated-list-item__graphic"><i class="material-icons">delete</i></span>
+																		<span class="mdc-deprecated-list-item__text participant_delete_button" data-delete-id="{{ participant.pk }}" data-delete-name="{{ participant.name }}">
+																			Remove
+																		</span>
+																	</li>
+																</ul>
+															</div>
+														</div>
+													{% else %}
+														<button class="mdc-icon-button mdc-icon-button--touch material-icons participant_url_button" data-url="{{ actions.0.url }}">
+															<div class="mdc-icon-button__ripple"></div>
+															{{ actions.0.icon }}
+														</button>
+														<div class="mdc-menu-surface--anchor" style="display: inline-block;">
+															<button class="mdc-icon-button mdc-icon-button--touch material-icons participant_menu_open" aria-hidden="true" id="participant_{{ participant.pk }}_menu_open">more_vert</button>
+															<div class="mdc-menu mdc-menu-surface" id="participant_{{ participant.pk }}_menu">
+																<ul class="mdc-list" role="menu" aria-hidden="true" aria-orientation="vertical" tabindex="-1">
+																	{% for action in actions %}
+																		{% if forloop.counter0 != 0 %}
+																			<li class="mdc-deprecated-list-item">
+																				<span class="mdc-deprecated-list-item__ripple"></span>
+																				<span class="mdc-deprecated-list-item__graphic"><i class="material-icons">{{ action.icon }}</i></span>
+																				<span class="mdc-deprecated-list-item__text participant_url_button" data-url="{{ action.url }}" href="{{ action.url }}">{{ action.name }}</span>
+																			</li>
+																		{% endif %}
+																	{% endfor %}
+  																	<li class="mdc-deprecated-list-item">
+																		<span class="mdc-deprecated-list-item__ripple"></span>
+																		<span class="mdc-deprecated-list-item__graphic"><i class="material-icons">delete</i></span>
+																		<span class="mdc-deprecated-list-item__text participant_delete_button" data-delete-id="{{ participant.pk }}" data-delete-name="{{ participant.name }}">
+																			Remove
+																		</span>
+																	</li>
+																</ul>
+															</div>
+														</div>
+													{% endif %}
+												{% endwith %}
+											{% endwith %}
 										</td>
 									</tr>
 								{% endfor %}
@@ -112,6 +173,8 @@
 			</div>
 		</div>
 	</div>
+
+	{% simple_dashboard_request_widget 'simple_messaging_broadcast_message' %}
 
 	<button class="mdc-fab mdc-fab--extended" id="fab_add_participant" style="position: absolute; right: 1em; bottom: 1em; z-index: 200;">
 		<div class="mdc-fab__ripple"></div>
@@ -226,6 +289,8 @@
 		</div>
 		<div class="mdc-dialog__scrim"></div>
 	</div>
+
+
 
 {% endblock %}
 {% block 'js_init' %}
