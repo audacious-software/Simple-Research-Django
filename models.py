@@ -38,7 +38,7 @@ class ResearchStudy(models.Model):
 
 class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-public-methods
     def participant_with_token(self, token):
-        participants = ResearchParticipant.objects.filter(metadata__login_token=token)
+        participants = self.filter(metadata__login_token=token)
 
         return participants.first()
 
