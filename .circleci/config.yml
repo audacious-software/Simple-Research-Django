@@ -53,7 +53,7 @@ jobs:
             mv ../simple_research sr
             cd sr
             git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
-            pip install -r requirements.txt -r quicksilver/requirements.txt
+            pip install -r simple_research/requirements.txt -r quicksilver/requirements.txt
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py install_quicksilver_tasks
@@ -110,7 +110,7 @@ jobs:
             mv ../simple_research sr
             cd sr
             git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
-            pip install -r requirements.txt -r quicksilver/requirements.txt
+            pip install -r simple_research/requirements.txt -r quicksilver/requirements.txt
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py install_quicksilver_tasks
@@ -167,7 +167,7 @@ jobs:
             mv ../simple_research sr
             cd sr
             git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
-            pip install -r requirements.txt -r quicksilver/requirements.txt
+            pip install -r simple_research/requirements.txt -r quicksilver/requirements.txt
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py install_quicksilver_tasks
@@ -224,7 +224,7 @@ jobs:
             mv ../simple_research sr
             cd sr
             git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
-            pip install -r requirements.txt -r quicksilver/requirements.txt
+            pip install -r simple_research/requirements.txt -r quicksilver/requirements.txt
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py install_quicksilver_tasks
@@ -281,7 +281,7 @@ jobs:
             mv ../simple_research sr
             cd sr
             git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
-            pip install -r requirements.txt -r quicksilver/requirements.txt
+            pip install -r simple_research/requirements.txt -r quicksilver/requirements.txt
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py install_quicksilver_tasks
@@ -338,7 +338,7 @@ jobs:
             mv ../simple_research sr
             cd sr
             git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
-            pip install -r requirements.txt -r quicksilver/requirements.txt
+            pip install -r simple_research/requirements.txt -r quicksilver/requirements.txt
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
             python manage.py install_quicksilver_tasks
