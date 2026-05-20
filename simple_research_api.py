@@ -1,3 +1,8 @@
+# pylint: disable=line-too-long
+
+import importlib
+import traceback
+
 import phonenumbers
 
 from django.conf import settings
@@ -28,3 +33,17 @@ def dashboard_actions(metadata):
         })
 
     return actions
+
+def fetch_records(source_type, source_config):
+    records = []
+
+    try:
+        integration = importlib.import_module('.integrations.%s' % source_type, package='simple_research')
+
+        records.extend(integration.fetch_records(source_config))
+    except ImportError:
+        traceback.print_exc()
+    except AttributeError:
+        traceback.print_exc()
+
+    return records

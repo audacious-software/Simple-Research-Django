@@ -28,6 +28,8 @@ class ResearchStudy(models.Model):
     study_starts = models.DateField(null=True, blank=True)
     study_ends = models.DateField(null=True, blank=True)
 
+    is_active = models.BooleanField(default=True)
+
     metadata = models.JSONField(default=dict, blank=True)
 
     def __str__(self):

@@ -7,6 +7,64 @@ from django.conf import settings
 
 from ..models import ResearchParticipant
 
+def fetch_records(source_config): # pylint: disable=too-many-locals
+    records = []
+
+    for project_config in source_config: # pylint: disable=too-many-nested-blocks
+        project_id = project_config.get('project_id', None)
+        api_token = project_config.get('api_token', None)
+        api_url =  project_config.get('api_url', None)
+
+        if api_token is not None and api_url is not None:
+            data = {
+                'token': api_token,
+                'content': 'record',
+                'action': 'export',
+                'format': 'json',
+                'type': 'flat',
+                'rawOrLabel': 'raw',
+                'rawOrLabelHeaders': 'raw',
+                'exportCheckboxLabel': 'false',
+                'exportSurveyFields': 'false',
+                'exportDataAccessGroups': 'false',
+                'returnFormat': 'json'
+            }
+
+            event_index = 0
+
+            for event in project_config.get('events', []):
+                data['events[%s]' % event_index] = event
+
+                event_index += 1
+
+            try:
+                responses = requests.post(api_url, data=data, timeout=300)
+
+                for event in project_config.get('events', []):
+                    for response in responses.json():
+                        response_event = response.get('redcap_event_name', None)
+
+                        if response_event == event:
+                            record_id = response.get('record_id', None)
+
+                            if record_id is not None:
+                                record = {
+                                    'redcap_event': response_event,
+                                    'redcap_project_id': project_id,
+                                }
+
+                                for key, value in response.items():
+                                    local_key = '%s.%s' % (event, key)
+
+                                    record[local_key] = value
+
+                                records.append(record)
+
+            except requests.exceptions.ReadTimeout:
+                pass
+
+    return records
+
 def pull_participants(study): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     projects = study.metadata.get('redcap_projects', [])
 
