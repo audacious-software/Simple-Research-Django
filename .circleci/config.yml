@@ -52,8 +52,10 @@ jobs:
             django-admin startproject sr
             mv ../simple_research sr
             cd sr
+            git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
+            python manage.py install_quicksilver_tasks
             python manage.py test
             cp simple_research/.pylintrc .
             pylint simple_research
@@ -106,8 +108,10 @@ jobs:
             django-admin startproject sr
             mv ../simple_research sr
             cd sr
+            git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
+            python manage.py install_quicksilver_tasks
             python manage.py test
             cp simple_research/.pylintrc .
             pylint simple_research
@@ -160,8 +164,10 @@ jobs:
             django-admin startproject sr
             mv ../simple_research sr
             cd sr
+            git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
+            python manage.py install_quicksilver_tasks
             python manage.py test
             cp simple_research/.pylintrc .
             pylint simple_research
@@ -214,8 +220,10 @@ jobs:
             django-admin startproject sr
             mv ../simple_research sr
             cd sr
+            git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
+            python manage.py install_quicksilver_tasks
             python manage.py test
             cp simple_research/.pylintrc .
             pylint simple_research
@@ -268,8 +276,10 @@ jobs:
             django-admin startproject sr
             mv ../simple_research sr
             cd sr
+            git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
+            python manage.py install_quicksilver_tasks
             python manage.py test
             cp simple_research/.pylintrc .
             pylint simple_research
@@ -322,8 +332,10 @@ jobs:
             django-admin startproject sr
             mv ../simple_research sr
             cd sr
+            git clone https://github.com/audacious-software/Quicksilver-Django.git quicksilver
             cp simple_research/.circleci/circle_settings.py sr/settings.py
             python manage.py migrate
+            python manage.py install_quicksilver_tasks
             python manage.py test
             cp simple_research/.pylintrc .
             pylint simple_research
