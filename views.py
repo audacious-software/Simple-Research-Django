@@ -35,6 +35,10 @@ def dashboard_participants(request):
 
         participant_objects = ResearchParticipant.objects.filter(search_query)
 
+    valid_studies = ResearchStudy.objects.filter(staff_members=request.user)
+
+    participant_objects = participant_objects.filter(participations__study__in=valid_studies).distinct()
+
     total = participant_objects.count()
 
     context['participants'] = participant_objects.order_by('sort_name')[offset:(offset + limit)]
