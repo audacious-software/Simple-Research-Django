@@ -79,13 +79,20 @@ requirejs(toLoad, function(mdc, Cookies) {
 	const addParticipantPhone = mdc.textField.MDCTextField.attachTo(document.getElementById('new_participant_phone'));
 	const addParticipantEmail = mdc.textField.MDCTextField.attachTo(document.getElementById('new_participant_email'));
 
-	$("#fab_add_participant").click(function(eventObj) {
-		addParticipantName.value = '';
+	console.log('ADD CLICK TO PARTICIPANT: ')
+	console.log($("#fab_add_participant"))
+
+	$('#fab_add_participant').off('click')
+
+	$('#fab_add_participant').on('click', function(eventObj) {
+		eventObj.preventDefault()
+
+		addParticipantName.value = ''
 
 		$("#add-dialog-title").text('Add new participant')
 		$('#dialog_update_study_button .mdc-button__label').text('Add')
 
-		addParticipant.open();
+		addParticipant.open()
 	});
 
 	$(".participant_url_button").click(function(eventObj) {
@@ -93,7 +100,6 @@ requirejs(toLoad, function(mdc, Cookies) {
 
 		window.location.href = url
 	});
-
 
 	$(".participant_update_button").click(function(eventObj) {
 		$("#add-dialog-title").text('Update participant');
@@ -208,9 +214,6 @@ requirejs(toLoad, function(mdc, Cookies) {
 	$('input[type="checkbox"]').off('change')
 
 	$('input[type="checkbox"]').on('change', function(eventObj) {
-		console.log('checkbox changed')
-		console.log(eventObj)
-
 		window.setTimeout(function() {
 			const selectedPhones = []
 
@@ -226,5 +229,21 @@ requirejs(toLoad, function(mdc, Cookies) {
 
 			window.updateSimpleMessagingBroadcastDestinations(selectedPhones)
 		}, 250)
+	})
+
+	$('#participant_upload').off('click')
+	$('#participant_upload').on('click', function(eventObj) {
+		eventObj.preventDefault()
+
+		$('#participant_upload_field').click()
+
+		return false
+	})
+
+	$('#participant_upload_field').off('change')
+	$('#participant_upload_field').on('change', function(eventObj) {
+		$('#participant_upload_form').submit()
+		
+		return false
 	})
 });

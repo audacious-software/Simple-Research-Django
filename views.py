@@ -1,9 +1,13 @@
 # pylint: disable=line-too-long, no-member
 
+import importlib
+import io
 import json
+import math
 import time
 
 import phonenumbers
+import pandas
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
@@ -13,18 +17,20 @@ from django.http import HttpResponse, Http404
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
-from .models import ResearchStudy, ResearchParticipant
+from .models import ResearchStudy, ResearchParticipant, ResearchParticipation
 
 @staff_member_required
 def dashboard_participants(request):
     context = {
         'include_search': True,
-        'studies': ResearchStudy.objects.all().order_by('name'),
+        'studies': ResearchStudy.objects.filter(staff_members=request.user).order_by('name'),
     }
 
     offset = int(request.GET.get('offset', '0'))
     limit = int(request.GET.get('limit', '25'))
     query = request.GET.get('q', None)
+
+    study_name = request.GET.get('study', None)
 
     participant_objects = ResearchParticipant.objects.all()
 
@@ -32,14 +38,36 @@ def dashboard_participants(request):
         search_query = Q(name__icontains=query) | Q(address__icontains=query) # pylint: disable=unsupported-binary-operation
         search_query = search_query | Q(phone_number__icontains=query) | Q(email__icontains=query) # pylint: disable=unsupported-binary-operation
         search_query = search_query | Q(metadata__icontains=query) # pylint: disable=unsupported-binary-operation
+        search_query = search_query | Q(participations__study__name__icontains=query) # pylint: disable=unsupported-binary-operation
 
         participant_objects = ResearchParticipant.objects.filter(search_query)
+
+    if study_name is not None and len(study_name) > 0:
+        participant_objects = ResearchParticipant.objects.filter(participations__study__name=study_name)
+        context['study_name'] = study_name
 
     valid_studies = ResearchStudy.objects.filter(staff_members=request.user)
 
     participant_objects = participant_objects.filter(participations__study__in=valid_studies).distinct()
 
     total = participant_objects.count()
+
+    additional_columns = []
+
+    for app in settings.INSTALLED_APPS:
+        try:
+            research_module = importlib.import_module('.simple_research_api', package=app)
+
+            module_values = research_module.dashboard_additional_columns()
+
+            if module_values is not None:
+                additional_columns.extend(module_values)
+        except ImportError:
+            pass
+        except AttributeError:
+            pass
+
+    context['additional_columns'] = additional_columns
 
     context['participants'] = participant_objects.order_by('sort_name')[offset:(offset + limit)]
     context['total'] = total
@@ -60,6 +88,7 @@ def dashboard_participants(request):
     last = int(total / limit) * limit
 
     context['last'] = '%s?offset=%s&limit=%s' % (reverse('dashboard_participants'), last, limit)
+    context['study_url'] = '%s?limit=%s&study=' % (reverse('dashboard_participants'), limit)
 
     return render(request, 'dashboard/dashboard_participants.html', context=context)
 
@@ -246,12 +275,13 @@ def dashboard_update_study(request):
                 staff_members = request.POST.get('staff_members', None)
 
                 for member_pk in staff_members.split(','):
-                    staff_member = get_user_model().objects.filter(pk=int(member_pk)).first()
+                    if member_pk != '':
+                        staff_member = get_user_model().objects.filter(pk=int(member_pk)).first()
 
-                    study.staff_members.clear()
+                        study.staff_members.clear()
 
-                    if staff_member is not None:
-                        study.staff_members.add(staff_member)
+                        if staff_member is not None:
+                            study.staff_members.add(staff_member)
 
                 study.save()
 
@@ -332,3 +362,139 @@ def simple_research_profile(request, token): # pylint: disable=too-many-branches
         return HttpResponse(json.dumps(response_json, indent=2), content_type='application/json', status=500)
 
     return render(request, 'simple_research_profile.html', context=context)
+
+@staff_member_required
+def dashboard_participants_xlsx(request): # pylint: disable=too-many-locals,too-many-branches, too-many-statements
+    if request.method == 'POST':
+        uploaded_file = request.FILES['participant_upload_field']
+
+        data_frame = pandas.read_excel(uploaded_file, sheet_name='Participants', engine='openpyxl')
+
+        renamed = data_frame.rename(columns={
+            'Internal ID': 'Internal_ID',
+            'Sorted Name': 'Sorted_Name',
+            'Date of Birth': 'Date_of_Birth',
+            'Phone Number': 'Phone_Number',
+            'E-Mail': 'E_Mail',
+        })
+
+        for data_item in renamed.itertuples():
+            internal_id = data_item.Internal_ID
+            name = data_item.Name
+            sort_name = data_item.Sorted_Name
+            date_of_birth = data_item.Date_of_Birth
+            address = data_item.Address
+            phone_number = data_item.Phone_Number
+            email = data_item.E_Mail
+            metadata_txt = data_item.Metadata
+            studies = data_item.Studies
+
+            participant = None
+
+            if math.isnan(internal_id) is False:
+                participant = ResearchParticipant.objects.filter(pk=internal_id).first()
+
+            if participant is None:
+                participant = ResearchParticipant()
+
+            if pandas.isna(name):
+                participant.name = None
+            else:
+                participant.name = name
+
+            if pandas.isna(sort_name):
+                participant.sort_name = None
+            else:
+                participant.sort_name = sort_name
+
+            if pandas.isna(address):
+                participant.address = None
+            else:
+                participant.address = address
+
+            if pandas.isna(email):
+                participant.email = None
+            else:
+                participant.email = email
+
+            if pandas.isna(date_of_birth):
+                participant.date_of_birth = None
+            else:
+                participant.date_of_birth = date_of_birth
+
+            if pandas.isna(phone_number):
+                participant.phone_number = None
+            else:
+                participant.phone_number = int(phone_number)
+
+            try:
+                participant.metadata = json.loads(metadata_txt)
+            except json.decoder.JSONDecodeError:
+                pass
+            except TypeError:
+                pass
+
+            if participant.name is not None:
+                participant.save()
+
+                for study_name in studies.split(','):
+                    study_name = study_name.strip()
+
+                    study = ResearchStudy.objects.filter(name=study_name).first()
+
+                    if study is not None:
+                        participation = ResearchParticipation.objects.filter(participant=participant, study=study).first()
+
+                        if participation is None:
+                            ResearchParticipation.objects.create(participant=participant, study=study)
+
+        return redirect('dashboard_participants')
+
+    valid_studies = ResearchStudy.objects.filter(staff_members=request.user)
+
+    participants = ResearchParticipant.objects.filter(participations__study__in=valid_studies).distinct()
+
+    data = {
+        'Internal ID': [],
+        'Name': [],
+        'Sorted Name': [],
+        'Date of Birth': [],
+        'Address': [],
+        'Phone Number': [],
+        'E-Mail': [],
+        'Metadata': [],
+        'Studies': [],
+    }
+
+    for participant in participants:
+        data['Internal ID'].append(participant.pk)
+        data['Name'].append(participant.name)
+        data['Sorted Name'].append(participant.sort_name)
+        data['Date of Birth'].append(participant.date_of_birth)
+        data['Address'].append(participant.address)
+        data['Phone Number'].append(participant.phone_number)
+        data['E-Mail'].append(participant.email)
+        data['Metadata'].append(participant.metadata)
+
+        studies = []
+
+        for participation in participant.participations.all():
+            if (participation.study.name in studies) is False:
+                studies.append(participation.study.name)
+
+        data['Studies'].append(', '.join(studies))
+
+    data_frame = pandas.DataFrame(data)
+
+    buffer = io.BytesIO()
+
+    with pandas.ExcelWriter(buffer, engine='openpyxl') as writer: # pylint: disable=abstract-class-instantiated
+        data_frame.to_excel(writer, sheet_name='Participants', index=False)
+
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    response['Content-Disposition'] = 'attachment; filename="participants.xlsx"'
+
+    return response

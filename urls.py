@@ -9,10 +9,11 @@ else:
 
 from .views import dashboard_studies, dashboard_delete_study, dashboard_update_study, \
                    dashboard_participants, dashboard_delete_participant, dashboard_update_participant, \
-                   simple_research_profile
+                   simple_research_profile, dashboard_participants_xlsx
 
 urlpatterns = [
     url(r'^participants$', dashboard_participants, name='dashboard_participants'),
+    url(r'^participants.xlsx$', dashboard_participants_xlsx, name='dashboard_participants_xlsx'),
     url(r'^dashboard/participant/delete.json$', dashboard_delete_participant, name='dashboard_delete_participant'),
     url(r'^dashboard/participant/update.json$', dashboard_update_participant, name='dashboard_update_participant'),
     url(r'^studies$', dashboard_studies, name='dashboard_studies'),

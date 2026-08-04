@@ -1,13 +1,20 @@
 # pylint: disable=line-too-long, no-member
 
 import importlib
+import traceback
+
+import phonenumbers
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
+
+PARTICIPANT_PHONE_CACHE = {}
 
 class ResearchStudy(models.Model):
     name = models.CharField(max_length=4096)
@@ -43,6 +50,60 @@ class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-publ
         participants = self.filter(metadata__login_token=token)
 
         return participants.first()
+
+    def participant_for_phone_number(self, phone_number): # pylint: disable=too-many-branches
+        if phone_number is None:
+            return None
+
+        participant = PARTICIPANT_PHONE_CACHE.get(phone_number, None)
+
+        if participant is not None:
+            return participant
+
+        try:
+            parsed_incoming = phonenumbers.parse(phone_number, settings.PHONE_REGION)
+
+            found = []
+
+            if phonenumbers.is_valid_number(parsed_incoming): # pylint: disable=too-many-nested-blocks
+                formatted_incoming = phonenumbers.format_number(parsed_incoming, phonenumbers.PhoneNumberFormat.E164)
+
+                for participant in self.all().exclude(phone_number=None):
+                    parsed_participant = phonenumbers.parse(participant.phone_number, settings.PHONE_REGION)
+
+                    if phonenumbers.is_valid_number(parsed_participant):
+                        formatted_participant = phonenumbers.format_number(parsed_participant, phonenumbers.PhoneNumberFormat.E164)
+
+                        if formatted_participant == formatted_incoming:
+                            if (participant.pk in found) is False:
+                                found.append(participant.pk)
+
+                for version in ResearchParticipantVersion.objects.all().exclude(phone_number=None).exclude(participant=None):
+                    try:
+                        parsed_participant = phonenumbers.parse(version.phone_number, settings.PHONE_REGION)
+
+                        if phonenumbers.is_valid_number(parsed_participant):
+                            formatted_participant = phonenumbers.format_number(parsed_participant, phonenumbers.PhoneNumberFormat.E164)
+
+                            if formatted_participant == formatted_incoming:
+                                if (version.participant.pk in found) is False:
+                                    found.append(version.participant.pk)
+                    except phonenumbers.phonenumberutil.NumberParseException:
+                        pass
+        except phonenumbers.phonenumberutil.NumberParseException:
+            traceback.print_exc()
+
+        if len(found) == 0:
+            return None
+
+        if len(found) > 1:
+            raise ResearchParticipant.MultipleObjectsReturned('%s participants with phone number %s. Expected 1.' % (len(found), phone_number))
+
+        participant = self.all().filter(pk=found[0]).first()
+
+        PARTICIPANT_PHONE_CACHE[phone_number] = participant
+
+        return participant
 
 class ResearchParticipant(models.Model):
     objects = ResearchParticipantManager()
@@ -144,6 +205,71 @@ class ResearchParticipant(models.Model):
             self.save()
 
         return '%s%s' % (settings.SITE_URL, reverse('simple_research_participant_preferences', args=[self.metadata.get('login_token', None)]))
+
+    def dashboard_additional_columns(self):
+        column_values = []
+
+        for app in settings.INSTALLED_APPS:
+            try:
+                research_module = importlib.import_module('.simple_research_api', package=app)
+
+                module_values = research_module.dashboard_additional_columns(self.to_dict())
+
+                if module_values is not None:
+                    column_values.extend(module_values)
+            except ImportError:
+                pass
+            except AttributeError:
+                pass
+
+        return column_values
+
+    def to_dict(self):
+        dict_value = {}
+
+        dict_value.update(self.metadata)
+
+        dict_value['phone_number'] = self.phone_number
+        dict_value['date_of_birth'] = self.date_of_birth
+        dict_value['email'] = self.email
+        dict_value['address'] = self.address
+
+        return dict_value
+
+class ResearchParticipantVersion(models.Model): # pylint: disable=too-many-instance-attributes
+    participant = models.ForeignKey(ResearchParticipant, related_name='versions', null=True, blank=True, on_delete=models.SET_NULL)
+
+    created = models.DateTimeField()
+
+    name = models.CharField(max_length=4096)
+    sort_name = models.CharField(max_length=4096, null=True, blank=True)
+
+    date_of_birth = models.DateField(null=True, blank=True)
+
+    address = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
+    phone_number = models.CharField(max_length=4096, null=True, blank=True)
+    email = models.CharField(max_length=4096, null=True, blank=True)
+
+    metadata = models.JSONField(default=dict, blank=True)
+
+    def __str__(self):
+        return '%s (%s)' % (self.participant, self.created)
+
+@receiver(post_save, sender=ResearchParticipant)
+def create_participant_version(sender, instance, **kwargs): # pylint: disable=unused-argument
+    version = ResearchParticipantVersion(participant=instance)
+
+    version.created = timezone.now()
+
+    version.name = instance.name
+    version.sort_name = instance.sort_name
+    version.date_of_birth = instance.date_of_birth
+    version.address = instance.address
+    version.phone_number = instance.phone_number
+    version.email = instance.email
+    version.metadata = instance.metadata
+
+    version.save()
 
 class ResearchParticipation(models.Model):
     study = models.ForeignKey(ResearchStudy, related_name='participations', on_delete=models.CASCADE)

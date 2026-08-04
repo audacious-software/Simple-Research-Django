@@ -9,7 +9,7 @@ from django.contrib import admin
 from django.db.models import JSONField
 from django.utils.safestring import mark_safe
 
-from .models import ResearchStudy, ResearchParticipant, ResearchParticipation
+from .models import ResearchStudy, ResearchParticipant, ResearchParticipation, ResearchParticipantVersion
 
 class PrettyJSONWidgetFixed(PrettyJSONWidget):
     def render(self, name, value, attrs=None, **kwargs):
@@ -58,6 +58,28 @@ class ResearchParticipantAdmin(admin.ModelAdmin):
     formfield_overrides = {
         JSONField: {'widget': PrettyJSONWidgetFixed(attrs={'initial': 'parsed'})}
     }
+
+@admin.register(ResearchParticipantVersion)
+class ResearchParticipantVersionAdmin(admin.ModelAdmin):
+    list_display = ('participant', 'created', 'name', 'sort_name', 'date_of_birth', 'phone_number', 'email',)
+    search_fields = ('name', 'sort_name', 'address', 'phone_number', 'email', 'metadata',)
+    list_filter = ('participant', 'created', 'date_of_birth',)
+
+    formfield_overrides = {
+        JSONField: {'widget': PrettyJSONWidgetFixed(attrs={'initial': 'parsed'})}
+    }
+
+    readonly_fields = (
+        'participant',
+        'created',
+        'name',
+        'sort_name',
+        'address',
+        'phone_number',
+        'email',
+        'metadata',
+        'date_of_birth',
+    )
 
 @admin.register(ResearchParticipation)
 class ResearchParticipationAdmin(admin.ModelAdmin):

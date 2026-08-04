@@ -6,7 +6,7 @@
 {% block 'main_content' %}
 	<div class="mdc-layout-grid" style="padding: 16px;">
 		<div class="mdc-layout-grid__inner">
-			<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-12">
+			<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-10">
 				<div class="mdc-data-table mdc-card" id="participants_table" style="width: 100%;">
 					<div class="mdc-data-table__table-container">
 						<table class="mdc-data-table__table" aria-label="Research Participants">
@@ -28,6 +28,9 @@
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">Phone Number</th>
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">E-Mail</th>
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">Studies</th>
+									{% for column in additional_columns %}
+										<th class="mdc-data-table__header-cell" role="columnheader" scope="col">{{ column.name }}</th>
+									{% endfor %}
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col" style="text-align: center; width: 192px;">Actions</th>
 								</tr>
 							</thead>
@@ -47,18 +50,30 @@
             								</div>
           								</td>
 										<td class="mdc-data-table__cell" scope="row" id="row_{{ participant.pk }}">{{ participant.name }}</a></td>
-										<td class="mdc-data-table__cell" scope="row">{{ participant.phone_number }}</a></td>
-										<td class="mdc-data-table__cell" scope="row">{{ participant.email }}</a></td>
-										<td class="mdc-data-table__cell" scope="row">{{ participant.study_names|join:", " }}</a></td>
-										<td class="mdc-data-table__cell" style="text-align: center; width: 192px;">
-											<button class="mdc-icon-button mdc-icon-button--touch material-icons participant_update_button" data-edit-id="{{ participant.pk }}" data-edit-name="{{ participant.name }}" data-edit-phone="{{ participant.phone_number }}" data-edit-email="{{ participant.email }}" data-edit-studies="{{ participant.study_pks|join:',' }}">
+										<td class="mdc-data-table__cell" scope="row">{% if participant.phone_number %}{{ participant.phone_number }}{% endif %}</td>
+										<td class="mdc-data-table__cell" scope="row">{% if participant.email %}{{ participant.email }}{% endif %}</td>
+										<td class="mdc-data-table__cell" scope="row">
+											{% for study in participant.study_names %}{% if forloop.counter0 != 0 %}, {% endif %}{{ study }}{% endfor %}
+										</td>
+										{% for column in participant.dashboard_additional_columns %}
+											<td class="mdc-data-table__cell" scope="row">
+												{% if column.action %}
+													<a href="{{ column.action }}">{{ column.display }}</a>
+												{% else %}
+													{{ column.display }}
+												{% endif %}
+											</td>
+										{% endfor %}
+
+										<td class="mdc-data-table__cell" style="text-align: right; width: 192px;">
+											<button class="mdc-icon-button mdc-icon-button--touch material-icons participant_update_button" data-edit-id="{{ participant.pk }}" data-edit-name="{{ participant.name }}" data-edit-phone="{% if participant.phone_number %}{{ participant.phone_number }}{% endif %}" data-edit-email="{% if participant.email %}{{ participant.email }}{% endif %}" data-edit-studies="{{ participant.study_pks|join:',' }}">
 												<div class="mdc-icon-button__ripple"></div>
 												edit
 											</button>
 											{% with participant.dashboard_actions as actions %}
 												{% with actions|length as menu_length %}
 													{% if menu_length == 0 %}
-														<div class="mdc-menu-surface--anchor">
+														<div class="mdc-menu-surface--anchor" style="display: inline-block;">
 															<button class="mdc-icon-button mdc-icon-button--touch material-icons participant_menu_open" aria-hidden="true" id="participant_{{ participant.pk }}_menu_open">more_vert</button>
 															<div class="mdc-menu mdc-menu-surface" id="participant_{{ participant.pk }}_menu">
 																<ul class="mdc-deprecated-list" role="menu" aria-hidden="true" aria-orientation="vertical" tabindex="-1">
@@ -168,6 +183,35 @@
 								</button>
 							</div>
 						</div>
+					</div>
+				</div>
+			</div>
+			<div class="mdc-layout-grid__cell mdc-layout-grid__cell--span-2">
+				<div class="mdc-data-table mdc-card" id="studies_table" style="padding: 16px; margin-top: 0px; width: 100%;">
+					<div class="mdc-typography--subtitle1"><strong>Studies</strong></div>
+					{% for study in studies %}
+						<div style="margin-top: 8px;" class="mdc-typography--body2">
+							{% if study.name == study_name %}
+								<a href="{{ study_url }}{{ study }}"><strong>{{ study }}</strong></a>
+							{% else %}
+								<a href="{{ study_url }}{{ study }}">{{ study }}</a>
+							{% endif %}
+						</div>
+					{% endfor %}
+					<div style="margin-top: 12px;" class="mdc-typography--body2"><a href="{{ study_url }}">All Studies</a></div>
+				</div>
+
+				<div class="mdc-data-table mdc-card" id="studies_table" style="padding: 16px; margin-top: 16px; width: 100%;">
+					<div class="mdc-typography--subtitle1"><strong>Participants</strong></div>
+					<div style="margin-top: 8px;" class="mdc-typography--body2">
+						<a href="{% url 'dashboard_participants_xlsx' %}"><i class="material-icons" style="font-size: 18px; vertical-align: text-top;">download</i> Download (XLS)</a>
+					</div>
+					<div style="margin-top: 8px;" class="mdc-typography--body2">
+						<a href="#" id="participant_upload"><i class="material-icons" style="font-size: 18px; vertical-align: text-top;">cloud_upload</i> Upload (XLS)</a>
+						<form action="{% url 'dashboard_participants_xlsx' %}" method="POST" enctype="multipart/form-data" id="participant_upload_form">
+							<input type="file" id="participant_upload_field" name="participant_upload_field" style="display: none;" />
+							{% csrf_token %}
+						</form>
 					</div>
 				</div>
 			</div>

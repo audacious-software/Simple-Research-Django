@@ -12,7 +12,7 @@ def dashboard_actions(metadata):
 
     email = metadata.get('email', None)
 
-    if email is not None:
+    if email is not None and email.strip() != '':
         actions.append({
             'name': 'Send E-Mail',
             'url': 'mailto:%s' % email,
@@ -22,15 +22,18 @@ def dashboard_actions(metadata):
     phone = metadata.get('phone', metadata.get('phone_number', None))
 
     if phone is not None:
-        parsed = phonenumbers.parse(phone, settings.PHONE_REGION)
+        try:
+            parsed = phonenumbers.parse(phone, settings.PHONE_REGION)
 
-        formatted = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+            formatted = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
 
-        actions.append({
-            'name': 'Phone Call',
-            'url': 'tel:%s' % formatted,
-            'icon': 'phone_enabled',
-        })
+            actions.append({
+                'name': 'Phone Call',
+                'url': 'tel:%s' % formatted,
+                'icon': 'phone_enabled',
+            })
+        except phonenumbers.NumberParseException:
+            pass
 
     return actions
 
