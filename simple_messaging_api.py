@@ -2,14 +2,12 @@
 
 import calendar
 import json
-import traceback
 
 import arrow
 import phonenumbers
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.serializers.json import DjangoJSONEncoder
 from django.utils import timezone
 
 from simple_messaging.models import IncomingMessage, OutgoingMessage
@@ -128,7 +126,7 @@ def new_message_count(phone_number):
     if phone_number is None:
         return None
 
-    try:
+    try: # pylint: disable=too-many-nested-blocks
         parsed_incoming = phonenumbers.parse(phone_number, settings.PHONE_REGION)
 
         if phonenumbers.is_valid_number(parsed_incoming): # pylint: disable=too-many-nested-blocks
@@ -186,7 +184,7 @@ def annotate_console_messages(messages): # pylint: disable=too-many-branches
 
                         if participant is not None:
                             phone_name_cache[sender] = participant.name
-                    except ResearchParticipant.MultipleObjectsReturned as ex:
+                    except ResearchParticipant.MultipleObjectsReturned:
                         pass
 
             name = phone_name_cache.get(message.get('sender', 'unknown-sender'), None)
@@ -223,92 +221,88 @@ def annotate_console_messages(messages): # pylint: disable=too-many-branches
                         'value': staff_name_cache.get(django_user, django_user)
                     })
 
-def annotate_view_messages(messages, request=None): # pylint: disable=too-many-branches
+def annotate_view_messages(messages, request=None): # pylint: disable=too-many-branches, too-many-statements
     phone_name_cache = {}
 
-    try:
-        if request is not None and request.user is not None:
-            to_remove = []
+    if request is not None and request.user is not None: # pylint: disable=too-many-nested-blocks
+        to_remove = []
 
-            participant_ids = []
+        participant_ids = []
 
-            for study in request.user.research_studies.all():
-                for participation in study.participations.all():
-                    if (participation.participant.pk in participant_ids) is False:
-                        participant_ids.append(participation.participant.pk)
+        for study in request.user.research_studies.all():
+            for participation in study.participations.all():
+                if (participation.participant.pk in participant_ids) is False:
+                    participant_ids.append(participation.participant.pk)
 
-            for message in messages:
-                direction = message.get('direction', None)
-
-                if direction == 'incoming':
-                    sender = message.get('sender', None)
-
-                    if sender is not None:
-                        try:
-                            participant = ResearchParticipant.objects.participant_for_phone_number(sender)
-
-                            if participant is not None:
-                                if (participant.pk in participant_ids) is False:
-                                    to_remove.append(message)
-                        except ResearchParticipant.MultipleObjectsReturned:
-                            pass
-
-                elif direction == 'outgoing':
-                    destination = message.get('destination', None)
-
-                    if destination is not None:
-                        try:
-                            participant = ResearchParticipant.objects.participant_for_phone_number(destination)
-
-                            if participant is not None:
-                                if (participant.pk in participant_ids) is False:
-                                    to_remove.append(message)
-                        except ResearchParticipant.MultipleObjectsReturned:
-                            pass
-
-            for message in to_remove:
-                messages.remove(message)
-
-        for message in messages: # pylint: disable=too-many-nested-blocks
+        for message in messages:
             direction = message.get('direction', None)
 
             if direction == 'incoming':
-                name = phone_name_cache.get(message.get('sender', 'unknown-sender'), None)
+                sender = message.get('sender', None)
 
-                if name is None:
-                    sender = message.get('sender', None)
+                if sender is not None:
+                    try:
+                        participant = ResearchParticipant.objects.participant_for_phone_number(sender)
 
-                    if sender is not None:
-                        try:
-                            participant = ResearchParticipant.objects.participant_for_phone_number(sender)
-
-                            if participant is not None:
-                                name = participant.name
-                                phone_name_cache[sender] = name
-                        except ResearchParticipant.MultipleObjectsReturned:
-                            pass
-
-                if name is not None:
-                    message['sender_name'] = name
+                        if participant is not None:
+                            if (participant.pk in participant_ids) is False:
+                                to_remove.append(message)
+                    except ResearchParticipant.MultipleObjectsReturned:
+                        pass
 
             elif direction == 'outgoing':
-                name = phone_name_cache.get(message.get('destination', 'unknown-destination'), None)
+                destination = message.get('destination', None)
 
-                if name is None:
-                    destination = message.get('destination', None)
+                if destination is not None:
+                    try:
+                        participant = ResearchParticipant.objects.participant_for_phone_number(destination)
 
-                    if destination is not None:
-                        try:
-                            participant = ResearchParticipant.objects.participant_for_phone_number(destination)
+                        if participant is not None:
+                            if (participant.pk in participant_ids) is False:
+                                to_remove.append(message)
+                    except ResearchParticipant.MultipleObjectsReturned:
+                        pass
 
-                            if participant is not None:
-                                name = participant.name
-                                phone_name_cache[destination] = name
-                        except ResearchParticipant.MultipleObjectsReturned:
-                            pass
+        for message in to_remove:
+            messages.remove(message)
 
-                if name is not None:
-                    message['destination_name'] = name
+    for message in messages: # pylint: disable=too-many-nested-blocks
+        direction = message.get('direction', None)
 
-    except:
-        traceback.print_exc()
+        if direction == 'incoming':
+            name = phone_name_cache.get(message.get('sender', 'unknown-sender'), None)
+
+            if name is None:
+                sender = message.get('sender', None)
+
+                if sender is not None:
+                    try:
+                        participant = ResearchParticipant.objects.participant_for_phone_number(sender)
+
+                        if participant is not None:
+                            name = participant.name
+                            phone_name_cache[sender] = name
+                    except ResearchParticipant.MultipleObjectsReturned:
+                        pass
+
+            if name is not None:
+                message['sender_name'] = name
+
+        elif direction == 'outgoing':
+            name = phone_name_cache.get(message.get('destination', 'unknown-destination'), None)
+
+            if name is None:
+                destination = message.get('destination', None)
+
+                if destination is not None:
+                    try:
+                        participant = ResearchParticipant.objects.participant_for_phone_number(destination)
+
+                        if participant is not None:
+                            name = participant.name
+                            phone_name_cache[destination] = name
+                    except ResearchParticipant.MultipleObjectsReturned:
+                        pass
+
+            if name is not None:
+                message['destination_name'] = name

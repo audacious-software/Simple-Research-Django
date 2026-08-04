@@ -95,3 +95,5 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = 'static'
+
+QUICKSILVER_LOCK_DIR = tempfile.gettempdir()

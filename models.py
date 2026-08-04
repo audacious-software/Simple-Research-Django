@@ -60,7 +60,7 @@ class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-publ
         if participant is not None:
             return participant
 
-        try:
+        try: # pylint: disable=too-many-nested-blocks
             parsed_incoming = phonenumbers.parse(phone_number, settings.PHONE_REGION)
 
             found = []

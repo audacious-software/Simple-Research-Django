@@ -247,7 +247,7 @@ def dashboard_update_study(request):
         'message': 'Unable to process request - please try again.'
     }
 
-    if request.method == 'POST':
+    if request.method == 'POST': # pylint: disable=too-many-nested-blocks
         name = request.POST.get('name', None)
 
         if name is not None:
@@ -365,7 +365,7 @@ def simple_research_profile(request, token): # pylint: disable=too-many-branches
 
 @staff_member_required
 def dashboard_participants_xlsx(request): # pylint: disable=too-many-locals,too-many-branches, too-many-statements
-    if request.method == 'POST':
+    if request.method == 'POST': # pylint: disable=too-many-nested-blocks
         uploaded_file = request.FILES['participant_upload_field']
 
         data_frame = pandas.read_excel(uploaded_file, sheet_name='Participants', engine='openpyxl')
