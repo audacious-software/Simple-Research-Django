@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from simple_messaging.models import IncomingMessage, OutgoingMessage 
+from simple_messaging.models import IncomingMessage, OutgoingMessage
 
 from .models import ResearchParticipant
 
