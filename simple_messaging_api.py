@@ -184,7 +184,7 @@ def annotate_console_messages(messages): # pylint: disable=too-many-branches
 
                         if participant is not None:
                             phone_name_cache[sender] = participant.name
-                    except: # pylint: disable=bare-except
+                    except: # pylint: disable=bare-except # nosec
                         pass
 
             name = phone_name_cache.get(message.get('sender', 'unknown-sender'), None)
