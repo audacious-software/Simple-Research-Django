@@ -184,7 +184,7 @@ def annotate_console_messages(messages): # pylint: disable=too-many-branches
 
                         if participant is not None:
                             phone_name_cache[sender] = participant.name
-                    except ResearchParticipant.MultipleObjectsReturned:
+                    except:
                         pass
 
             name = phone_name_cache.get(message.get('sender', 'unknown-sender'), None)
