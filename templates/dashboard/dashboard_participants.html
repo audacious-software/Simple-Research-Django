@@ -29,7 +29,7 @@
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">E-Mail</th>
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col">Studies</th>
 									{% for column in additional_columns %}
-										<th class="mdc-data-table__header-cell" role="columnheader" scope="col">{{ column.name }}</th>
+										<th class="mdc-data-table__header-cell" role="columnheader" scope="col" {% if column.style %}style="{{ column.style }}"{% endif %}>{{ column.name }}</th>
 									{% endfor %}
 									<th class="mdc-data-table__header-cell" role="columnheader" scope="col" style="text-align: center; width: 192px;">Actions</th>
 								</tr>
@@ -56,15 +56,14 @@
 											{% for study in participant.study_names %}{% if forloop.counter0 != 0 %}, {% endif %}{{ study }}{% endfor %}
 										</td>
 										{% for column in participant.dashboard_additional_columns %}
-											<td class="mdc-data-table__cell" scope="row">
+											<td class="mdc-data-table__cell" scope="row" {% if column.column_style %}style="{{ column.column_style }}"{% endif %}>
 												{% if column.action %}
-													<a href="{{ column.action }}">{{ column.display }}</a>
+													<a href="{{ column.action }}" {% if column.style %}style="{{ column.style }}"{% endif %}>{{ column.display }}</a>
 												{% else %}
 													{{ column.display }}
 												{% endif %}
 											</td>
 										{% endfor %}
-
 										<td class="mdc-data-table__cell" style="text-align: right; width: 192px;">
 											<button class="mdc-icon-button mdc-icon-button--touch material-icons participant_update_button" data-edit-id="{{ participant.pk }}" data-edit-name="{{ participant.name }}" data-edit-phone="{% if participant.phone_number %}{{ participant.phone_number }}{% endif %}" data-edit-email="{% if participant.email %}{{ participant.email }}{% endif %}" data-edit-studies="{{ participant.study_pks|join:',' }}">
 												<div class="mdc-icon-button__ripple"></div>
