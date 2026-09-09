@@ -223,6 +223,7 @@ def annotate_console_messages(messages): # pylint: disable=too-many-branches
 
 def annotate_view_messages(messages, request=None): # pylint: disable=too-many-branches, too-many-statements
     phone_name_cache = {}
+    participant_cache = {}
 
     if request is not None and request.user is not None: # pylint: disable=too-many-nested-blocks
         to_remove = []
@@ -242,7 +243,12 @@ def annotate_view_messages(messages, request=None): # pylint: disable=too-many-b
 
                 if sender is not None:
                     try:
-                        participant = ResearchParticipant.objects.participant_for_phone_number(sender)
+                        participant = participant_cache.get(sender, None)
+
+                        if participant is None:
+                            participant = ResearchParticipant.objects.participant_for_phone_number(sender)
+
+                            participant_cache[sender] = participant
 
                         if participant is not None:
                             if (participant.pk in participant_ids) is False:
@@ -255,7 +261,12 @@ def annotate_view_messages(messages, request=None): # pylint: disable=too-many-b
 
                 if destination is not None:
                     try:
-                        participant = ResearchParticipant.objects.participant_for_phone_number(destination)
+                        participant = participant_cache.get(sender, None)
+
+                        if participant is None:
+                            participant = ResearchParticipant.objects.participant_for_phone_number(sender)
+
+                            participant_cache[sender] = participant
 
                         if participant is not None:
                             if (participant.pk in participant_ids) is False:
@@ -277,7 +288,12 @@ def annotate_view_messages(messages, request=None): # pylint: disable=too-many-b
 
                 if sender is not None:
                     try:
-                        participant = ResearchParticipant.objects.participant_for_phone_number(sender)
+                        participant = participant_cache.get(sender, None)
+
+                        if participant is None:
+                            participant = ResearchParticipant.objects.participant_for_phone_number(sender)
+
+                            participant_cache[sender] = participant
 
                         if participant is not None:
                             name = participant.name
@@ -296,7 +312,12 @@ def annotate_view_messages(messages, request=None): # pylint: disable=too-many-b
 
                 if destination is not None:
                     try:
-                        participant = ResearchParticipant.objects.participant_for_phone_number(destination)
+                        participant = participant_cache.get(sender, None)
+
+                        if participant is None:
+                            participant = ResearchParticipant.objects.participant_for_phone_number(sender)
+
+                            participant_cache[sender] = participant
 
                         if participant is not None:
                             name = participant.name

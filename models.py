@@ -1,7 +1,6 @@
 # pylint: disable=line-too-long, no-member
 
 import importlib
-import traceback
 
 import phonenumbers
 
@@ -58,6 +57,9 @@ class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-publ
         participant = PARTICIPANT_PHONE_CACHE.get(phone_number, None)
 
         if participant is not None:
+            if participant == '-':
+                return None
+
             return participant
 
         try: # pylint: disable=too-many-nested-blocks
@@ -73,6 +75,8 @@ class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-publ
 
                     if phonenumbers.is_valid_number(parsed_participant):
                         formatted_participant = phonenumbers.format_number(parsed_participant, phonenumbers.PhoneNumberFormat.E164)
+
+                        PARTICIPANT_PHONE_CACHE[formatted_participant] = participant
 
                         if formatted_participant == formatted_incoming:
                             if (participant.pk in found) is False:
@@ -91,9 +95,11 @@ class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-publ
                     except phonenumbers.phonenumberutil.NumberParseException:
                         pass
         except phonenumbers.phonenumberutil.NumberParseException:
-            traceback.print_exc()
+            pass
 
         if len(found) == 0:
+            PARTICIPANT_PHONE_CACHE[phone_number] = '-'
+
             return None
 
         if len(found) > 1:
