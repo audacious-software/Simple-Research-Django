@@ -86,21 +86,24 @@ def update_last_console_view(phone_number, last_view=None):
         formatted_incoming = phonenumbers.format_number(parsed_incoming, phonenumbers.PhoneNumberFormat.E164)
 
         for participant in ResearchParticipant.objects.all().exclude(phone_number=None):
-            parsed_participant = phonenumbers.parse(participant.phone_number, settings.PHONE_REGION)
+            try:
+                parsed_participant = phonenumbers.parse(participant.phone_number, settings.PHONE_REGION)
 
-            if phonenumbers.is_valid_number(parsed_participant):
-                formatted_participant = phonenumbers.format_number(parsed_participant, phonenumbers.PhoneNumberFormat.E164)
+                if phonenumbers.is_valid_number(parsed_participant):
+                    formatted_participant = phonenumbers.format_number(parsed_participant, phonenumbers.PhoneNumberFormat.E164)
 
-                if formatted_participant == formatted_incoming:
-                    participant.metadata['simple_messaging_last_console_view'] = calendar.timegm(last_view.timetuple())
+                    if formatted_participant == formatted_incoming:
+                        participant.metadata['simple_messaging_last_console_view'] = calendar.timegm(last_view.timetuple())
 
-                    if 'cached_new_message_count_lookup' in participant.metadata:
-                        del participant.metadata['cached_new_message_count_lookup']
+                        if 'cached_new_message_count_lookup' in participant.metadata:
+                            del participant.metadata['cached_new_message_count_lookup']
 
-                    if 'cached_new_message_count' in participant.metadata:
-                        del participant.metadata['cached_new_message_count']
+                        if 'cached_new_message_count' in participant.metadata:
+                            del participant.metadata['cached_new_message_count']
 
-                    participant.save()
+                        participant.save()
+            except phonenumbers.NumberParseException:
+                pass
 
 def fetch_last_console_view(phone_number):
     try:
@@ -124,7 +127,7 @@ def fetch_last_console_view(phone_number):
 
 def new_message_count(phone_number):
     if phone_number is None:
-        return None
+        return 0
 
     try: # pylint: disable=too-many-nested-blocks
         parsed_incoming = phonenumbers.parse(phone_number, settings.PHONE_REGION)
@@ -163,7 +166,7 @@ def new_message_count(phone_number):
     except phonenumbers.NumberParseException:
         pass
 
-    return None
+    return 0
 
 def annotate_console_messages(messages): # pylint: disable=too-many-branches
     phone_name_cache = {}
