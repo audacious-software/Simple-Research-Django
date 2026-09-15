@@ -82,7 +82,7 @@ def update_last_console_view(phone_number, last_view=None):
 
     parsed_incoming = phonenumbers.parse(phone_number, settings.PHONE_REGION)
 
-    if phonenumbers.is_valid_number(parsed_incoming):
+    if phonenumbers.is_valid_number(parsed_incoming): # pylint: disable=too-many-nested-blocks
         formatted_incoming = phonenumbers.format_number(parsed_incoming, phonenumbers.PhoneNumberFormat.E164)
 
         for participant in ResearchParticipant.objects.all().exclude(phone_number=None):
