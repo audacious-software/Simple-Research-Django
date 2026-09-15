@@ -26,12 +26,15 @@ def fetch_short_url_metadata(outgoing_message):
         pass
 
     for participant in ResearchParticipant.objects.exclude(phone_number=None).exclude(phone_number=''):
-        part_parsed = phonenumbers.parse(participant.phone_number, settings.PHONE_REGION)
+        try:
+            part_parsed = phonenumbers.parse(participant.phone_number, settings.PHONE_REGION)
 
-        part_formatted = phonenumbers.format_number(part_parsed, phonenumbers.PhoneNumberFormat.E164)
+            part_formatted = phonenumbers.format_number(part_parsed, phonenumbers.PhoneNumberFormat.E164)
 
-        if out_formatted == part_formatted:
-            metadata['simple_research.Participant'] = '%s:%s' % (settings.ALLOWED_HOSTS[0], participant.pk,)
+            if out_formatted == part_formatted:
+                metadata['simple_research.Participant'] = '%s:%s' % (settings.ALLOWED_HOSTS[0], participant.pk,)
+        except phonenumbers.phonenumberutil.NumberParseException:
+            pass
 
     return metadata
 
@@ -224,7 +227,7 @@ def annotate_console_messages(messages): # pylint: disable=too-many-branches
                         'value': staff_name_cache.get(django_user, django_user)
                     })
 
-def annotate_view_messages(messages, request=None): # pylint: disable=too-many-branches, too-many-statements
+def annotate_view_messages(messages, request=None, context=None): # pylint: disable=too-many-branches, too-many-statements
     phone_name_cache = {}
     participant_cache = {}
 
@@ -256,6 +259,8 @@ def annotate_view_messages(messages, request=None): # pylint: disable=too-many-b
                         if participant is not None:
                             if (participant.pk in participant_ids) is False:
                                 to_remove.append(message)
+                        elif context != 'unknown-message-log':
+                            to_remove.append(message)
                     except ResearchParticipant.MultipleObjectsReturned:
                         pass
 
@@ -264,16 +269,18 @@ def annotate_view_messages(messages, request=None): # pylint: disable=too-many-b
 
                 if destination is not None:
                     try:
-                        participant = participant_cache.get(sender, None)
+                        participant = participant_cache.get(destination, None)
 
                         if participant is None:
-                            participant = ResearchParticipant.objects.participant_for_phone_number(sender)
+                            participant = ResearchParticipant.objects.participant_for_phone_number(destination)
 
-                            participant_cache[sender] = participant
+                            participant_cache[destination] = participant
 
                         if participant is not None:
                             if (participant.pk in participant_ids) is False:
                                 to_remove.append(message)
+                        elif context != 'unknown-message-log':
+                            to_remove.append(message)
                     except ResearchParticipant.MultipleObjectsReturned:
                         pass
 
