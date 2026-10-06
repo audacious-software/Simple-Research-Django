@@ -13,8 +13,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 
-PARTICIPANT_PHONE_CACHE = {}
-
 class ResearchStudy(models.Model):
     name = models.CharField(max_length=4096)
 
@@ -54,14 +52,6 @@ class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-publ
         if phone_number is None:
             return None
 
-        participant = PARTICIPANT_PHONE_CACHE.get(phone_number, None)
-
-        if participant is not None:
-            if participant == '-':
-                return None
-
-            return participant
-
         try: # pylint: disable=too-many-nested-blocks
             parsed_incoming = phonenumbers.parse(phone_number, settings.PHONE_REGION)
 
@@ -70,44 +60,66 @@ class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-publ
             if phonenumbers.is_valid_number(parsed_incoming): # pylint: disable=too-many-nested-blocks
                 formatted_incoming = phonenumbers.format_number(parsed_incoming, phonenumbers.PhoneNumberFormat.E164)
 
-                for participant in self.all().exclude(phone_number=None):
+                matches = self.filter(known_phone_numbers__contains=formatted_incoming)
+
+                match_count = matches.count()
+
+                if match_count > 1:
+                    raise ResearchParticipant.MultipleObjectsReturned('%s participants with phone number %s. Expected 1.' % (len(match_count), phone_number))
+                elif match_count == 1:
+                    return matches.first()
+
+                for participant in self.all().exclude(known_phone_numbers=None):
                     parsed_participant = phonenumbers.parse(participant.phone_number, settings.PHONE_REGION)
+
+                    do_save = False
 
                     if phonenumbers.is_valid_number(parsed_participant):
                         formatted_participant = phonenumbers.format_number(parsed_participant, phonenumbers.PhoneNumberFormat.E164)
 
-                        PARTICIPANT_PHONE_CACHE[formatted_participant] = participant
+                        if participant.known_phone_numbers is None:
+                            participant.known_phone_numbers = formatted_participant
+                            do_save = True
+                        elif (formatted_participant in participant.known_phone_numbers) is False:
+                            participant.known_phone_numbers += '\n%s' % formatted_participant
+                            do_save = True
 
                         if formatted_participant == formatted_incoming:
                             if (participant.pk in found) is False:
                                 found.append(participant.pk)
 
-                for version in ResearchParticipantVersion.objects.all().exclude(phone_number=None).exclude(participant=None):
-                    try:
-                        parsed_participant = phonenumbers.parse(version.phone_number, settings.PHONE_REGION)
+                    for version in participant.versions.all().exclude(phone_number=None):
+                        try:
+                            parsed_participant = phonenumbers.parse(version.phone_number, settings.PHONE_REGION)
 
-                        if phonenumbers.is_valid_number(parsed_participant):
-                            formatted_participant = phonenumbers.format_number(parsed_participant, phonenumbers.PhoneNumberFormat.E164)
+                            if phonenumbers.is_valid_number(parsed_participant):
+                                formatted_participant = phonenumbers.format_number(parsed_participant, phonenumbers.PhoneNumberFormat.E164)
 
-                            if formatted_participant == formatted_incoming:
-                                if (version.participant.pk in found) is False:
-                                    found.append(version.participant.pk)
-                    except phonenumbers.phonenumberutil.NumberParseException:
-                        pass
+                                if participant.known_phone_numbers is None:
+                                    participant.known_phone_numbers = formatted_participant
+                                    do_save = True
+                                elif (formatted_participant in participant.known_phone_numbers) is False:
+                                    participant.known_phone_numbers += '\n%s' % formatted_participant
+                                    do_save = True
+
+                                if formatted_participant == formatted_incoming:
+                                    if (participant.pk in found) is False:
+                                        found.append(participant.pk)
+                        except phonenumbers.phonenumberutil.NumberParseException:
+                            pass
+
+                    if do_save:
+                        participant.save()
         except phonenumbers.phonenumberutil.NumberParseException:
             pass
 
         if len(found) == 0:
-            PARTICIPANT_PHONE_CACHE[phone_number] = '-'
-
             return None
 
         if len(found) > 1:
             raise ResearchParticipant.MultipleObjectsReturned('%s participants with phone number %s. Expected 1.' % (len(found), phone_number))
 
         participant = self.all().filter(pk=found[0]).first()
-
-        PARTICIPANT_PHONE_CACHE[phone_number] = participant
 
         return participant
 
@@ -124,6 +136,7 @@ class ResearchParticipant(models.Model):
     email = models.CharField(max_length=4096, null=True, blank=True)
 
     metadata = models.JSONField(default=dict, blank=True)
+    known_phone_numbers = models.TextField(null=True, blank=True, max_length=(1024 * 1024))
 
     def __str__(self):
         return '%s' % self.name
