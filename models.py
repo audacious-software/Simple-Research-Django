@@ -66,7 +66,8 @@ class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-publ
 
                 if match_count > 1:
                     raise ResearchParticipant.MultipleObjectsReturned('%s participants with phone number %s. Expected 1.' % (len(match_count), phone_number))
-                elif match_count == 1:
+
+                if match_count == 1:
                     return matches.first()
 
                 for participant in self.all().exclude(known_phone_numbers=None):

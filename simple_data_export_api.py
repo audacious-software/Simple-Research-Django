@@ -1,21 +1,5 @@
 # pylint: disable=line-too-long, no-member
 
-import io
-import importlib
-import json
-import os
-import tempfile
-
-import phonenumbers
-import pytz
-
-from django.conf import settings
-from django.db import connection
-
-from simple_data_export.utils import fetch_export_identifier, UnicodeWriter # pylint: disable=import-error
-
-from .models import ResearchParticipation
-
 def export_data_sources(params=None, requester=None): # pylint: disable=too-many-branches
     if params is None:
         params = {}
@@ -38,7 +22,7 @@ def prune_export_sources(sources):
 
     return new_sources
 
-def export_data_types(available_sources):
+def export_data_types(available_sources): # pylint: disable=unused-argument
     return [
         # ('simple_messaging.conversation_transcripts', 'Conversation Transcripts',),
     ]
