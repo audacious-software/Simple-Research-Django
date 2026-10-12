@@ -137,7 +137,7 @@ class ResearchParticipant(models.Model):
     email = models.CharField(max_length=4096, null=True, blank=True)
 
     metadata = models.JSONField(default=dict, blank=True)
-    known_phone_numbers = models.TextField(null=True, blank=True, max_length=(1024 * 1024))
+    known_phone_numbers = models.TextField(null=True, blank=True, max_length=(1024 * 1024)) # pylint: disable=superfluous-parens
 
     def __str__(self):
         return '%s' % self.name
