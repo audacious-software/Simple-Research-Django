@@ -52,10 +52,10 @@ class ResearchParticipantManager(models.Manager): # pylint: disable=too-few-publ
         if phone_number is None:
             return None
 
+        found = []
+
         try: # pylint: disable=too-many-nested-blocks
             parsed_incoming = phonenumbers.parse(phone_number, settings.PHONE_REGION)
-
-            found = []
 
             if phonenumbers.is_valid_number(parsed_incoming): # pylint: disable=too-many-nested-blocks
                 formatted_incoming = phonenumbers.format_number(parsed_incoming, phonenumbers.PhoneNumberFormat.E164)
@@ -256,6 +256,27 @@ class ResearchParticipant(models.Model):
 
         return dict_value
 
+    def clean_versions(self):
+        to_delete = []
+
+        last_version = None
+
+        for version in self.versions.order_by('-pk'):
+            if last_version is None:
+                last_version = version
+            else:
+                if last_version.matches(version):
+                    to_delete.append(version.pk)
+                else:
+                    last_version = version
+
+        deleted = 0
+
+        for version_pk in to_delete:
+            deleted += ResearchParticipantVersion.objects.filter(pk=version_pk).delete()[0]
+
+        return deleted
+
 class ResearchParticipantVersion(models.Model): # pylint: disable=too-many-instance-attributes
     participant = models.ForeignKey(ResearchParticipant, related_name='versions', null=True, blank=True, on_delete=models.SET_NULL)
 
@@ -275,21 +296,67 @@ class ResearchParticipantVersion(models.Model): # pylint: disable=too-many-insta
     def __str__(self):
         return '%s (%s)' % (self.participant, self.created)
 
+    def matches(self, version): # pylint: disable=too-many-return-statements
+        if self.participant.pk != version.participant.pk:
+            return False
+
+        if self.name != version.name:
+            return False
+
+        if self.sort_name != version.sort_name:
+            return False
+
+        if self.date_of_birth != version.date_of_birth:
+            return False
+
+        if self.address != version.address:
+            return False
+
+        if self.phone_number != version.phone_number:
+            return False
+
+        if self.email != version.email:
+            return False
+
+        return True
+
+    participant = models.ForeignKey(ResearchParticipant, related_name='versions', null=True, blank=True, on_delete=models.SET_NULL)
+
+    created = models.DateTimeField()
+
+    name = models.CharField(max_length=4096)
+    sort_name = models.CharField(max_length=4096, null=True, blank=True)
+
+    date_of_birth = models.DateField(null=True, blank=True)
+
+    address = models.TextField(max_length=(1024 * 1024), null=True, blank=True)
+    phone_number = models.CharField(max_length=4096, null=True, blank=True)
+    email = models.CharField(max_length=4096, null=True, blank=True)
+
+
 @receiver(post_save, sender=ResearchParticipant)
 def create_participant_version(sender, instance, **kwargs): # pylint: disable=unused-argument
-    version = ResearchParticipantVersion(participant=instance)
+    update_fields = kwargs.get('update_fields', None)
 
-    version.created = timezone.now()
+    create_version = False
 
-    version.name = instance.name
-    version.sort_name = instance.sort_name
-    version.date_of_birth = instance.date_of_birth
-    version.address = instance.address
-    version.phone_number = instance.phone_number
-    version.email = instance.email
-    version.metadata = instance.metadata
+    if update_fields is None:
+        create_version = True
 
-    version.save()
+    if create_version:
+        version = ResearchParticipantVersion(participant=instance)
+
+        version.created = timezone.now()
+
+        version.name = instance.name
+        version.sort_name = instance.sort_name
+        version.date_of_birth = instance.date_of_birth
+        version.address = instance.address
+        version.phone_number = instance.phone_number
+        version.email = instance.email
+        version.metadata = instance.metadata
+
+        version.save()
 
 class ResearchParticipation(models.Model):
     study = models.ForeignKey(ResearchStudy, related_name='participations', on_delete=models.CASCADE)

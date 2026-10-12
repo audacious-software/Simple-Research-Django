@@ -104,7 +104,7 @@ def update_last_console_view(phone_number, last_view=None):
                         if 'cached_new_message_count' in participant.metadata:
                             del participant.metadata['cached_new_message_count']
 
-                        participant.save()
+                        participant.save(update_fields=['metadata'])
             except phonenumbers.NumberParseException:
                 pass
 
@@ -163,7 +163,7 @@ def new_message_count(phone_number):
 
                         participant.metadata['cached_new_message_count'] = message_count
 
-                        participant.save()
+                        participant.save(update_fields=['metadata'])
 
                         return message_count
     except phonenumbers.NumberParseException:
