@@ -422,17 +422,27 @@ def dashboard_participants_xlsx(request): # pylint: disable=too-many-locals,too-
             else:
                 participant.date_of_birth = date_of_birth
 
-            if pandas.isna(phone_number):
-                participant.phone_number = None
-            else:
-                participant.phone_number = int(phone_number)
-
             try:
                 participant.metadata = json.loads(metadata_txt)
             except json.decoder.JSONDecodeError:
                 pass
             except TypeError:
                 pass
+
+            if pandas.isna(phone_number):
+                participant.phone_number = None
+            else:
+                try: 
+                    parsed = phonenumbers.parse(phone_number, settings.PHONE_REGION)
+
+                    destination = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+
+                    participant.phone_number = destination
+                except phonenumbers.NumberParseException:
+                    if participant.metadata is None:
+                        participant.metadata = {}
+
+                    participant.metadata['uploaded_phone_number'] = phone_number
 
             if participant.name is not None:
                 participant.save()
