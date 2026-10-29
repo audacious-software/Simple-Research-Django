@@ -432,7 +432,7 @@ def dashboard_participants_xlsx(request): # pylint: disable=too-many-locals,too-
             if pandas.isna(phone_number):
                 participant.phone_number = None
             else:
-                try: 
+                try:
                     parsed = phonenumbers.parse('%s' % phone_number, settings.PHONE_REGION)
 
                     destination = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
