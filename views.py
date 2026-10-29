@@ -433,7 +433,7 @@ def dashboard_participants_xlsx(request): # pylint: disable=too-many-locals,too-
                 participant.phone_number = None
             else:
                 try: 
-                    parsed = phonenumbers.parse(phone_number, settings.PHONE_REGION)
+                    parsed = phonenumbers.parse('%s' % phone_number, settings.PHONE_REGION)
 
                     destination = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
 
